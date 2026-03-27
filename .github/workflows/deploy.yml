@@ -1,35 +1,45 @@
-name: Deploy Vampire Trade to GitHub Pages
+name: Direct Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main # Agar aapki branch ka naam 'master' hai toh yaha master likhein
+    branches: ["main"] # Aapki main branch ka naam
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Build Project
-        run: npm run build # Ye 'dist' folder generate karega
+      - name: Build
+        run: npm run build # Vite automatically 'dist' folder banayega
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: dist # Vite ka build output folder
-          branch: gh-pages # Is branch par build files publish hongi
+          path: './dist'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
